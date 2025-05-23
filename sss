@@ -6,19 +6,19 @@ local Mouse = LocalPlayer:GetMouse()
 local Camera = workspace.CurrentCamera
 
 local AimEnabled = false  -- Toggle aim on/off
-local Smoothness = 0.5   -- Lower value for ultra-smooth tracking (closer to 0 is slower, more precise)
+local Smoothness = 0.25   -- Faster tracking (higher = faster)
 local AimbotMode = "Instant" -- Options: "Instant", "Smooth"
 
--- Function to get torso for body shots in R6 and R15 models
+-- Function to get head for aiming
 local function getHead(character)
     return character:FindFirstChild("Head")
 end
 
--- Function to find the closest player's torso with improved precision, updating on respawn
+-- Function to find the closest player's head
 local function getClosestPlayer()
     local closestTarget = nil
     local shortestDistance = math.huge
-    
+
     for _, player in pairs(Players:GetPlayers()) do
         if player ~= LocalPlayer and player.Character then
             local character = player.Character
@@ -27,15 +27,15 @@ local function getClosestPlayer()
                 humanoid.Died:Connect(function()
                     player.Character = player.CharacterAdded:Wait()
                 end)
-                local body = getBody(character)
-                if body then
-                    local targetPos = body.Position -- Aim at torso
+                local head = getHead(character)
+                if head then
+                    local targetPos = head.Position
                     local screenPoint, onScreen = Camera:WorldToScreenPoint(targetPos)
                     if onScreen then
                         local mouseDistance = (Vector2.new(Mouse.X, Mouse.Y) - Vector2.new(screenPoint.X, screenPoint.Y)).Magnitude
                         if mouseDistance < shortestDistance then
                             shortestDistance = mouseDistance
-                            closestTarget = body
+                            closestTarget = head
                         end
                     end
                 end
@@ -49,7 +49,7 @@ end
 local function aimAtTarget()
     local target = getClosestPlayer()
     if target then
-        local targetPos = target.Position -- Fine-tuned body aiming
+        local targetPos = target.Position
         if AimbotMode == "Instant" then
             Camera.CFrame = CFrame.new(Camera.CFrame.Position, targetPos)
         elseif AimbotMode == "Smooth" then
@@ -58,16 +58,16 @@ local function aimAtTarget()
     end
 end
 
--- Toggle Aimbot on right click hold
+-- Toggle Aimbot with Alt key (Left or Right)
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
-    if input.KeyCode == Enum.KeyCode.LeftAlt then
-    AimEnabled = true
+    if input.KeyCode == Enum.KeyCode.LeftAlt or input.KeyCode == Enum.KeyCode.RightAlt then
+        AimEnabled = true
     end
 end)
 
 UserInputService.InputEnded:Connect(function(input, gameProcessed)
-    if input.KeyCode == Enum.KeyCode.LeftAlt then
-    AimEnabled = false
+    if input.KeyCode == Enum.KeyCode.LeftAlt or input.KeyCode == Enum.KeyCode.RightAlt then
+        AimEnabled = false
     end
 end)
 
