@@ -1,0 +1,79 @@
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local LocalPlayer = Players.LocalPlayer
+local Mouse = LocalPlayer:GetMouse()
+local Camera = workspace.CurrentCamera
+
+local AimEnabled = false  -- Toggle aim on/off
+local Smoothness = 0.1   -- Lower value for ultra-smooth tracking (closer to 0 is slower, more precise)
+local AimbotMode = "Smooth" -- Options: "Instant", "Smooth"
+
+-- Function to get torso for body shots in R6 and R15 models
+local function getBody(character)
+    return character:FindFirstChild("Torso") or character:FindFirstChild("UpperTorso") or character:FindFirstChild("HumanoidRootPart")
+end
+
+-- Function to find the closest player's torso with improved precision, updating on respawn
+local function getClosestPlayer()
+    local closestTarget = nil
+    local shortestDistance = math.huge
+    
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer and player.Character then
+            local character = player.Character
+            local humanoid = character:FindFirstChild("Humanoid")
+            if humanoid and humanoid.Health > 0 then
+                humanoid.Died:Connect(function()
+                    player.Character = player.CharacterAdded:Wait()
+                end)
+                local body = getBody(character)
+                if body then
+                    local targetPos = body.Position -- Aim at torso
+                    local screenPoint, onScreen = Camera:WorldToScreenPoint(targetPos)
+                    if onScreen then
+                        local mouseDistance = (Vector2.new(Mouse.X, Mouse.Y) - Vector2.new(screenPoint.X, screenPoint.Y)).Magnitude
+                        if mouseDistance < shortestDistance then
+                            shortestDistance = mouseDistance
+                            closestTarget = body
+                        end
+                    end
+                end
+            end
+        end
+    end
+    return closestTarget
+end
+
+-- Aimbot Function
+local function aimAtTarget()
+    local target = getClosestPlayer()
+    if target then
+        local targetPos = target.Position -- Fine-tuned body aiming
+        if AimbotMode == "Instant" then
+            Camera.CFrame = CFrame.new(Camera.CFrame.Position, targetPos)
+        elseif AimbotMode == "Smooth" then
+            Camera.CFrame = Camera.CFrame:Lerp(CFrame.new(Camera.CFrame.Position, targetPos), Smoothness)
+        end
+    end
+end
+
+-- Toggle Aimbot on right click hold
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if input.UserInputType == Enum.UserInputType.MouseButton2 then  -- Right Click to activate
+        AimEnabled = true
+    end
+end)
+
+UserInputService.InputEnded:Connect(function(input, gameProcessed)
+    if input.UserInputType == Enum.UserInputType.MouseButton2 then  -- Release Right Click to deactivate
+        AimEnabled = false
+    end
+end)
+
+-- Run Aimbot every frame
+RunService.RenderStepped:Connect(function()
+    if AimEnabled then
+        aimAtTarget()
+    end
+end)
