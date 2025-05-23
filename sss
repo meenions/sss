@@ -10,8 +10,8 @@ local Smoothness = 0.5   -- Lower value for ultra-smooth tracking (closer to 0 i
 local AimbotMode = "Instant" -- Options: "Instant", "Smooth"
 
 -- Function to get torso for body shots in R6 and R15 models
-local function getBody(character)
-    return character:FindFirstChild("Torso") or character:FindFirstChild("UpperTorso") or character:FindFirstChild("HumanoidRootPart")
+local function getHead(character)
+    return character:FindFirstChild("Head")
 end
 
 -- Function to find the closest player's torso with improved precision, updating on respawn
@@ -60,14 +60,14 @@ end
 
 -- Toggle Aimbot on right click hold
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
-    if input.UserInputType == Enum.UserInputType.MouseButton2 then  -- Right Click to activate
-        AimEnabled = true
+    if input.KeyCode == Enum.KeyCode.LeftAlt then
+    AimEnabled = true
     end
 end)
 
 UserInputService.InputEnded:Connect(function(input, gameProcessed)
-    if input.UserInputType == Enum.UserInputType.MouseButton2 then  -- Release Right Click to deactivate
-        AimEnabled = false
+    if input.KeyCode == Enum.KeyCode.LeftAlt then
+    AimEnabled = false
     end
 end)
 
